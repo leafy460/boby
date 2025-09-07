@@ -1,33 +1,114 @@
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Learn to fly 2</title>
-    <link rel="icon" type="image/x-icon" href="learn-to-fly-2.jpg" />
-    <link rel="shortcut icon" type="image/x-icon" href="learn-to-fly-2.jpg" />
-  </head>
-  <body>
-    <script src="/js/main.js"></script>
-    <div id="ruffle" width="100%" height="100%"></div>
-    <script src="ruffle.js"></script>
-    <script>
-      window.RufflePlayer = window.RufflePlayer || {};
-      window.addEventListener("load", (event) => {
-        const ruffle = window.RufflePlayer.newest();
-        const player = ruffle.createPlayer();
-        const container = document.getElementById("ruffle");
-        player.id = "player";
-        player.style.width = "100%";
-        player.style.height = "100%";
-        container.appendChild(player);
-        player.load("Flash Sonic.sfw");
-      });
-      alert("This game is not officially supported by ruffle, so you may see some weird things or the game might crash. This is not a thing we can fix. Sorry!")
-    </script>
-  </body>
-</html>
-<!-- global script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<!-- in <head> ... -->
+<style>
+/* Popup overlay (dark background) */
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-L6VPS22YJG"></script>
-<script src="/global.js"></script>
-<!-- end global script -->
+/* Popup box */
+.popup-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 320px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.popup-content h2 { margin-top: 0; color: #333; }
+
+.popup-content button {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background: #4CAF50;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.popup-content button:hover { background: #45a049; }
+</style>
+
+<body>
+  <!-- put this where you want the game button to appear inside <body> -->
+<a href="/gaming/burrito.html" class="game-button" data-message="Sorry, Burrito Bison doesn’t work right now.">
+  <img src="images/burrito.png" alt="Burrito Bison Icon">
+  <p>Burrito Bison</p>
+</a>
+
+<a href="/gaming/working-game.html" class="game-button">
+  <img src="images/working.png" alt="Working Game Icon">
+  <p>Working Game</p>
+</a>
+
+<!-- place this once near the end of <body>, before your script tags -->
+<div id="popup" class="popup-overlay" aria-hidden="true" role="dialog" aria-labelledby="popup-title">
+  <div class="popup-content" role="document">
+    <h2 id="popup-title">Game Unavailable</h2>
+    <p id="popup-message"></p>
+    <button id="popup-close" type="button">OK</button>
+  </div>
+</div>
+<!-- place this right before </body> -->
+<script>
+(function(){
+  var popup = document.getElementById('popup');
+  var popupMessage = document.getElementById('popup-message');
+  var closeBtn = document.getElementById('popup-close');
+
+  function openPopup(message) {
+    popupMessage.textContent = message || "This game doesn't work right now.";
+    popup.style.display = 'flex';
+    popup.setAttribute('aria-hidden', 'false');
+    closeBtn.focus();
+  }
+
+  function closePopup() {
+    popup.style.display = 'none';
+    popup.setAttribute('aria-hidden', 'true');
+  }
+
+  // close when clicking the overlay outside the box
+  popup.addEventListener('click', function(e){
+    if (e.target === popup) closePopup();
+  });
+
+  // close with ESC key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && popup.style.display === 'flex') closePopup();
+  });
+
+  closeBtn.addEventListener('click', closePopup);
+
+  // Attach to all .game-button anchors:
+  document.querySelectorAll('.game-button').forEach(function(button) {
+    button.addEventListener('click', function(e) {
+      var msg = button.getAttribute('data-message');
+      if (msg) {
+        // If data-message exists, prevent the link and show popup
+        e.preventDefault();
+        openPopup(msg);
+      }
+      // If no data-message, do nothing — link will navigate normally
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
