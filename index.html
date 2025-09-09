@@ -1,69 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mini Leaf Game</title>
+  <link rel="icon" type="image/x-icon" href="images/leaf.png"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lilita+One&display=swap');
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #8B4513, #A0522D, #CD853F);
+      color: #fffdeb;
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+    .game-title {
+      font-family: 'Lilita One', cursive;
+      font-size: 2.4rem;
+      margin-top: 22px;
+      color: #FFD700;
+      text-shadow: 0 1px 12px #8B4513;
+    }
+    #gameCanvas {
+      background: rgba(255,255,255,0.08);
+      margin: 32px auto 0 auto;
+      display: block;
+      border-radius: 16px;
+      box-shadow: 0 6px 22px #A0522D;
+      border: 2px solid #FFD700;
+    }
+    .score {
+      font-size: 1.2rem;
+      margin-top: 10px;
+      color: #FFD700;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+    }
+    .btn {
+      margin-top: 18px;
+      padding: 12px 38px;
+      border-radius: 10px;
+      border: 2px solid #FFD700;
+      background: rgba(255,255,255,0.12);
+      color: #FFD700;
+      font-size: 1.1rem;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 0 18px #A0522D;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+    }
+    .btn:hover {
+      background: #FFD700;
+      color: #8B4513;
+      box-shadow: 0 0 24px #FFD700, 0 0 36px #FFA500;
+    }
+    .game-over {
+      font-size: 2rem;
+      color: #FF6347;
+      margin-top: 24px;
+      font-family: 'Lilita One', cursive;
+      text-shadow: 0 2px 18px #8B4513;
+    }
+  </style>
 </head>
-<!-- in <head> ... -->
-<style>
-/* Popup overlay (dark background) */
-.popup-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-/* Popup box */
-.popup-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  width: 320px;
-  max-width: 90%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.popup-content h2 { margin-top: 0; color: #333; }
-
-.popup-content button {
-  margin-top: 15px;
-  padding: 8px 16px;
-  background: #4CAF50;
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.popup-content button:hover { background: #45a049; }
-</style>
-
 <body>
-  <!-- put this where you want the game button to appear inside <body> -->
-<a href="/gaming/burrito.html" class="game-button" data-message="Sorry, Burrito Bison doesn’t work right now.">
-  <img src="images/burrito.png" alt="Burrito Bison Icon">
-  <p>Burrito Bison</p>
-</a>
+  <div class="game-title">Mini Leaf Game</div>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <div class="score" id="score">Score: 0</div>
+  <button class="btn" id="restartBtn" style="display:none;">Restart</button>
+  <div class="game-over" id="gameOver" style="display:none;">Game Over!</div>
+  <script>
+    // ---- Leaf Flappy Game ----
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-<a href="/gaming/working-game.html" class="game-button">
-  <img src="images/working.png" alt="Working Game Icon">
-  <p>Working Game</p>
-</a>
+    // Leaf image (You can replace with your own leaf image URL)
+    const leafImg = new Image();
+    leafImg.src = "https://randyvz205.github.io/leafs/leaves1.png";
 
-<!-- place this once near the end of <body>, before your script tags -->
-<div id="popup" class="popup-overlay" aria-hidden="true" role="dialog" aria-labelledby="popup-title">
-  <div class="popup-content" role="document">
-    <h2 id="popup-title">Game Unavailable</h2>
-    <p id="popup-message"></p>
-    <button id="popup-close" type="button">OK</button>
-  </div>
-</div>
-<script src="script.js"></script>
+    // Game variables
+    const GRAVITY = 0.32;
+    const JUMP = -6.2;
+    const PIPE_GAP = 145;
+    const PIPE_WIDTH = 68;
+    const PIPE_SPEED = 2.7;
+    let leaf = { x: 70, y: 300, w: 40, h: 40, velocity: 0 };
+    let pipes = [];
+    let score = 0;
+    let gameActive = true;
+    let gameStarted = false;
+
+    // Sound effects (optional, add your own files if you want)
+    // let flapSound = new Audio('flap.mp3');
+    // let scoreSound = new Audio('score.mp3');
+    // let hitSound = new Audio('hit.mp3');
+
+    function resetGame() {
+      leaf.y = 300; leaf.velocity = 0;
+      score = 0;
+      pipes = [];
+      gameActive = true;
+      gameStarted = false;
+      document.getElementById('score').textContent = "Score: 0";
+      document.getElementById('gameOver').style.display = "none";
+      document.getElementById('restartBtn').style.display = "none";
+    }
+
+    function spawnPipe() {
+      let topPipeHeight = Math.floor(80 + Math.random() * 250);
+      pipes.push({
+        x: canvas.width,
+        top: topPipeHeight,
+        bottom: topPipeHeight + PIPE_GAP
+      });
+    }
+
+    function drawLeaf() {
+      ctx.save();
+      ctx.translate(leaf.x + leaf.w/2, leaf.y + leaf.h/2);
+      ctx.rotate(leaf.velocity * 0.06);
+      ctx.drawImage(leafImg, -leaf.w/2, -leaf.h/2, leaf.w, leaf.h);
+      ctx.restore();
+    }
+
+    function drawPipes() {
+      ctx.fillStyle = "#228B22";
+      pipes.forEach(pipe => {
+        // Top pipe
+        ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top);
+        // Bottom pipe
+        ctx.fillRect(pipe.x, pipe.bottom, PIPE_WIDTH, canvas.height - pipe.bottom);
+      });
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Add some animated leaves for background
+      ctx.globalAlpha = 0.1;
+      for (let i = 0; i < 12; i++) {
+        ctx.drawImage(leafImg, (i * 33 + score * 5) % canvas.width, (i * 45 + score * 7) % canvas.height, 38, 38);
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    function update() {
+      if (!gameActive) return;
+      drawBackground();
+
+      // Leaf physics
+      leaf.velocity += GRAVITY;
+      leaf.y += leaf.velocity;
+
+      // Pipes
+      if (gameStarted) {
+        if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 220) {
+          spawnPipe();
+        }
+        pipes.forEach(pipe => pipe.x -= PIPE_SPEED);
+
+        // Remove pipes off-screen
+        if (pipes.length && pipes[0].x < -PIPE_WIDTH) pipes.shift();
+      }
+
+      drawPipes();
+      drawLeaf();
+
+      // Collision detection
+      pipes.forEach(pipe => {
+        // Hit pipe
+        if (
+          leaf.x + leaf.w > pipe.x && leaf.x < pipe.x + PIPE_WIDTH &&
+          (leaf.y < pipe.top || leaf.y + leaf.h > pipe.bottom)
+        ) {
+          endGame();
+        }
+        // Score
+        if (!pipe.scored && pipe.x + PIPE_WIDTH < leaf.x) {
+          score++;
+          pipe.scored = true;
+          document.getElementById('score').textContent = "Score: " + score;
+          // scoreSound.play();
+        }
+      });
+
+      // Hit ground or ceiling
+      if (leaf.y + leaf.h > canvas.height || leaf.y < 0) endGame();
+
+      if (gameActive) requestAnimationFrame(update);
+    }
+
+    function flap() {
+      if (!gameActive) return;
+      leaf.velocity = JUMP;
+      gameStarted = true;
+      // flapSound.play();
+    }
+
+    function endGame() {
+      gameActive = false;
+      document.getElementById('gameOver').style.display = "block";
+      document.getElementById('restartBtn').style.display = "inline-block";
+      // hitSound.play();
+    }
+
+    // Controls
+    canvas.addEventListener('mousedown', flap);
+    canvas.addEventListener('touchstart', flap);
+    document.addEventListener('keydown', function(e) {
+      if (e.code === "Space" || e.code === "ArrowUp") flap();
+    });
+
+    document.getElementById('restartBtn').onclick = function() {
+      resetGame();
+      update();
+    };
+
+    // Start game
+    leafImg.onload = function() {
+      resetGame();
+      update();
+    };
+
+    // Mobile friendly: prevent scrolling on space/touch
+    window.addEventListener('touchmove', function(e){e.preventDefault()}, {passive:false});
+  </script>
 </body>
 </html>
